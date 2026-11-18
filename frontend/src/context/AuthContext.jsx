@@ -4,10 +4,12 @@ import axios, { HttpStatusCode } from "axios"; //axios is a library that helps y
 //HttpStatusCode is an object provided by Axios containing HTTP status codes.
 import { Children, createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import server from "../environment";
 
 export const AuthContext = createContext({});
+
 const client = axios.create({
-    baseURL: "http://localhost:8000/api/v1/users"
+    baseURL: `${server.prod}/api/v1/users`
 });
 
 export const AuthProvider = ({ children }) => {
