@@ -9,7 +9,7 @@ import server from "../environment";
 export const AuthContext = createContext({});
 
 const client = axios.create({
-    baseURL: `${server.prod}/api/v1/users`
+    baseURL: `${window.location.hostname === "localhost" ? server.dev : server.prod}/api/v1/users`
 });
 
 export const AuthProvider = ({ children }) => {

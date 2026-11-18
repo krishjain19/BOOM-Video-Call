@@ -13,14 +13,20 @@ import { Chat } from "@mui/icons-material";
 import ScreenShare from "@mui/icons-material/ScreenShare";
 import StopScreenShare from "@mui/icons-material/StopScreenShare";
 import styles from "../styles/videoComponent.module.css";
-import { faL } from "@fortawesome/free-solid-svg-icons";
+import server from "../environment";
+import server from "../environment";
 
-const server_url = "http://localhost:8000";
+const server_url =
+  window.location.hostname === "localhost" ? server.dev : server.prod;
 
 var connections = {};
 
 const peerConfigConnections = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
+  ],
 };
 
 export default function VideoMeetComponent() {
@@ -273,7 +279,9 @@ export default function VideoMeetComponent() {
   };
 
   let connectToSocketServer = () => {
-    socketRef.current = io.connect(server_url, { secure: false });
+    socketRef.current = io.connect(server_url, {
+      secure: server_url.startsWith("https"),
+    });
 
     socketRef.current.on("signal", gotMessageFromServer);
 
@@ -476,13 +484,11 @@ export default function VideoMeetComponent() {
   let handleCallEnd = () => {
     try {
       let tracks = localVideoRef.current.srcObject.getTracks();
-      tracks.forEach(track => track.stop())
-    } catch (e) {
-      
-    }
+      tracks.forEach((track) => track.stop());
+    } catch (e) {}
 
-    routeTo("/home")
-  }
+    routeTo("/home");
+  };
 
   return (
     <div>
@@ -525,7 +531,7 @@ export default function VideoMeetComponent() {
               </IconButton>
 
               <IconButton onClick={handleCallEnd} style={{ color: "red" }}>
-                <CallEnd/>
+                <CallEnd />
               </IconButton>
 
               <IconButton onClick={handleAudio} style={{ color: "white" }}>
@@ -554,7 +560,9 @@ export default function VideoMeetComponent() {
               className={styles.meetUserVideo}
               ref={localVideoRef}
               autoPlay
+              playsInline
               muted
+              playsInline
               style={{ transform: screen ? "none" : "scaleX(-1)" }}
             ></video>
             <div className={styles.conferenceView}>
@@ -586,15 +594,20 @@ export default function VideoMeetComponent() {
                 <h1>Chat</h1>
 
                 <div className={styles.chattingDisplay}>
-
-                  {messages.length > 0 ? messages.map((item, index) => {
-                    return (
-                      <div style={{marginTop :"10px"}} key={index}>
-                        <p style={{fontWeight:"bold", fontSize:"18px"}}>{item.sender}</p>
-                        <p style={{fontSize:"15px"}}>{item.data}</p>
-                      </div>
-                    );
-                  }) : <p>no messages yet</p> }
+                  {messages.length > 0 ? (
+                    messages.map((item, index) => {
+                      return (
+                        <div style={{ marginTop: "10px" }} key={index}>
+                          <p style={{ fontWeight: "bold", fontSize: "18px" }}>
+                            {item.sender}
+                          </p>
+                          <p style={{ fontSize: "15px" }}>{item.data}</p>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p>no messages yet</p>
+                  )}
                 </div>
 
                 <div className={styles.chatingArea}>
