@@ -32,8 +32,8 @@ const landing = () => {
             </h1>
             <p>Long Distance !...what`s that?</p>
 
-            <div role="button">
-              <a href="/auth">Get Started</a>
+            <div role="button" onClick={() => router("/auth")}>
+              <p style={{ cursor: "pointer" }}>Get Started</p>
             </div>
           </div>
 

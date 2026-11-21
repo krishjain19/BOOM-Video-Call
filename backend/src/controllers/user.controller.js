@@ -38,7 +38,7 @@ const login = async (req, res) => {
   } catch (e) {
     return res
       .status(httpStatus.INTERNAL_SERVER_ERROR)
-      .json({ meddage: `Something went wrong ${e}` });
+      .json({ message: `Something went wrong ${e}` });
   }
 };
 

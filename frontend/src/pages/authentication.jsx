@@ -29,28 +29,33 @@ export default function authentication() {
 
   const [FormState, setFormState] = React.useState(0);
   const [open, setOpen] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const { handleRegister, handleLogin } = useContext(AuthContext);
 
   let handleAuth = async () => {
+    setError("");
+    setLoading(true);
     try {
       if (FormState === 0) {
-        let result = await handleLogin(username, password);
+        await handleLogin(username, password);
       }
       if (FormState === 1) {
         let result = await handleRegister(name, username, password);
-        console.log(result);
-        setUsername("");
-        setName("");
-        setPassword("");
-        setMessage(result);
+        setMessage(result || "Registration successful!");
         setOpen(true);
-        setError("");
-        setFormState(0);
+        // Automatically log in after registration
+        await handleLogin(username, password);
       }
     } catch (err) {
-      let message = err.response.data.message;
+      let message =
+        err.response?.data?.message ||
+        err.response?.data?.meddage ||
+        err.message ||
+        "Failed to connect. The server may be waking up, please try again in a few seconds.";
       setError(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -152,10 +157,15 @@ export default function authentication() {
                 type="button"
                 fullWidth
                 variant="contained"
+                disabled={loading}
                 sx={{ mt: 3, mb: 2 }}
                 onClick={handleAuth}
               >
-                {FormState === 0 ? "Log In" : "Register"} 
+                {loading
+                  ? "Please wait..."
+                  : FormState === 0
+                  ? "Log In"
+                  : "Register"}
               </Button>
             </Box>
           </Box>
