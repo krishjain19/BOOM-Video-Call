@@ -14,6 +14,7 @@ import ScreenShare from "@mui/icons-material/ScreenShare";
 import StopScreenShare from "@mui/icons-material/StopScreenShare";
 import styles from "../styles/videoComponent.module.css";
 import server from "../environment";
+import EnterIntoLoby from "./EnterIntoLoby";
 
 const server_url =
   window.location.hostname === "localhost" ? server.dev : server.prod;
@@ -512,35 +513,7 @@ export default function VideoMeetComponent() {
   return (
     <div>
       {askForUsername === true ? (
-        <div>
-          <h2>Enter into loby</h2>
-          <TextField
-            id="outlined-basic"
-            label="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            variant="outlined"
-          />
-          <Button variant="contained" onClick={connect}>
-            Join Meeting
-          </Button>
-
-          <div>
-            <video
-              ref={localVideoRef}
-              autoPlay
-              muted
-              playsInline
-              style={{
-                width: "100%",
-                maxWidth: "600px",
-                borderRadius: "20px",
-                margin: "1rem",
-                transform: "scaleX(-1)",
-              }}
-            />
-          </div>
-        </div>
+        <EnterIntoLoby/>
       ) : (
         <div className={styles.meetVideoContainer}>
           <div className={styles.meetingContent}>
