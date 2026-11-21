@@ -18,6 +18,12 @@ app.use(cors());
 app.use(express.json({ limit: "40kb" }));
 app.use(express.urlencoded({ limit: "40kb", extended: true }));
 
+// Normalize double slashes in URLs if any (e.g. //api -> /api)
+app.use((req, res, next) => {
+  req.url = req.url.replace(/\/+/g, "/");
+  next();
+});
+
 app.use("/api/v1/users", userRoutes);
 
 app.get("/home", (req, res) => {
