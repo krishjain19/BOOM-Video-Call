@@ -14,7 +14,6 @@ import ScreenShare from "@mui/icons-material/ScreenShare";
 import StopScreenShare from "@mui/icons-material/StopScreenShare";
 import styles from "../styles/videoComponent.module.css";
 import server from "../environment";
-import server from "../environment";
 
 const server_url =
   window.location.hostname === "localhost" ? server.dev : server.prod;
@@ -26,6 +25,21 @@ const peerConfigConnections = {
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun2.l.google.com:19302" },
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelay",
+      credential: "openrelay",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelay",
+      credential: "openrelay",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelay",
+      credential: "openrelay",
+    },
   ],
 };
 
@@ -75,6 +89,8 @@ export default function VideoMeetComponent() {
 
       if (videoPermission) {
         setVideoAvailable(true);
+        videoAllowed = true;
+        videoPermission.getTracks().forEach((track) => track.stop());
       } else {
         setVideoAvailable(false);
       }
@@ -85,6 +101,8 @@ export default function VideoMeetComponent() {
 
       if (audioPermission) {
         setAudioAvailable(true);
+        audioAllowed = true;
+        audioPermission.getTracks().forEach((track) => track.stop());
       } else {
         setAudioAvailable(false);
       }
@@ -95,10 +113,10 @@ export default function VideoMeetComponent() {
         setScreenAvailable(false);
       }
 
-      if (videoAvailable || audioAvailable) {
+      if (videoAllowed || audioAllowed) {
         const userMediaStream = await navigator.mediaDevices.getUserMedia({
-          video: videoAvailable,
-          audio: audioAvailable,
+          video: videoAllowed,
+          audio: audioAllowed,
         });
 
         if (userMediaStream) {
@@ -286,7 +304,8 @@ export default function VideoMeetComponent() {
     socketRef.current.on("signal", gotMessageFromServer);
 
     socketRef.current.on("connect", () => {
-      socketRef.current.emit("join-call", window.location.pathname);
+      const room = (url ? `/${url}` : window.location.pathname).replace(/\/+$/, "");
+      socketRef.current.emit("join-call", room);
 
       socketIdref.current = socketRef.current.id;
 
