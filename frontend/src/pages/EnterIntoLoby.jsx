@@ -19,6 +19,18 @@ const EnterIntoLoby = ({
 
   return (
     <div className="min-vh-100 d-flex align-items-center justify-content-center bg-black text-white p-3 p-md-4">
+      <style>{`
+        .lobby-name-input::placeholder {
+          color: #adb5bd !important;
+          opacity: 1 !important;
+        }
+        .lobby-name-input:focus {
+          background-color: #000000 !important;
+          color: #ffffff !important;
+          border-color: #ff7b00 !important;
+          box-shadow: 0 0 0 2px rgba(255, 123, 0, 0.35) !important;
+        }
+      `}</style>
       <div
         className="card bg-dark text-white border border-secondary border-opacity-25 rounded-2 shadow-lg"
         style={{ maxWidth: "960px", width: "100%" }}
@@ -167,7 +179,7 @@ const EnterIntoLoby = ({
                   <input
                     id="lobbyDisplayName"
                     type="text"
-                    className="form-control bg-black text-white border-secondary rounded-1 py-2"
+                    className="form-control bg-black text-white border-secondary rounded-1 py-2 lobby-name-input"
                     placeholder="Enter your name"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
