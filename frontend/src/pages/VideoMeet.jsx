@@ -305,7 +305,10 @@ export default function VideoMeetComponent() {
     socketRef.current.on("signal", gotMessageFromServer);
 
     socketRef.current.on("connect", () => {
-      const room = (url ? `/${url}` : window.location.pathname).replace(/\/+$/, "");
+      const room = (url ? `/${url}` : window.location.pathname).replace(
+        /\/+$/,
+        "",
+      );
       socketRef.current.emit("join-call", room);
 
       socketIdref.current = socketRef.current.id;
@@ -513,7 +516,17 @@ export default function VideoMeetComponent() {
   return (
     <div>
       {askForUsername === true ? (
-        <EnterIntoLoby/>
+        <EnterIntoLoby
+          username={username}
+          setUsername={setUsername}
+          connect={connect}
+          localVideoRef={localVideoRef}
+          video={video}
+          audio={audio}
+          handleVideo={handleVideo}
+          handleAudio={handleAudio}
+          url={url}
+        />
       ) : (
         <div className={styles.meetVideoContainer}>
           <div className={styles.meetingContent}>
