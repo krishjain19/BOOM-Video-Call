@@ -530,6 +530,7 @@ export default function VideoMeetComponent() {
       ) : (
         <div className={styles.meetVideoContainer}>
           <div className={styles.meetingContent}>
+            {/* ── Control Bar ── */}
             <div className={styles.buttonContainer}>
               <IconButton onClick={handleVideo} style={{ color: "white" }}>
                 {video === true ? <VideocamIcon /> : <VideocamOffIcon />}
@@ -561,97 +562,149 @@ export default function VideoMeetComponent() {
               </Badge>
             </div>
 
-            <video
-              className={styles.meetUserVideo}
-              ref={localVideoRef}
-              autoPlay
-              playsInline
-              muted
-              playsInline
-              style={{ transform: screen ? "none" : "scaleX(-1)" }}
-            ></video>
-            <div className={styles.conferenceView}>
-              {videos.map((video) => (
-                <div key={video.socketId}>
-                  {/* <h2> {video.socketId} </h2> */}
-
-                  <video
-                    data-socket={video.socketId}
-                    ref={(ref) => {
-                      if (ref && video.stream) {
-                        ref.srcObject = video.stream;
-                        ref
-                          .play()
-                          .catch((err) => console.log("Autoplay error:", err));
-                      }
-                    }}
-                    autoPlay
-                    playsInline
-                  ></video>
-                </div>
-              ))}
+            {/* ── Self video: always bottom-right PiP ── */}
+            <div className={styles.pipWrapper}>
+              <video
+                className={styles.meetUserVideo}
+                ref={localVideoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{ transform: screen ? "none" : "scaleX(-1)" }}
+              />
+              <span className={styles.pipLabel}>You</span>
             </div>
+
+            {/* ── Alone: dark waiting screen ── */}
+            {videos.length === 0 ? (
+              <div className={styles.soloView}>
+                <div className={styles.soloLabel}>
+                  Waiting for others to join...
+                </div>
+              </div>
+            ) : videos.length === 1 ? (
+              /* ── 1 Remote Participant: True Full Screen ── */
+              <div className={styles.singleView}>
+                <video
+                  data-socket={videos[0].socketId}
+                  ref={(ref) => {
+                    if (ref && videos[0].stream) {
+                      ref.srcObject = videos[0].stream;
+                      ref
+                        .play()
+                        .catch((err) =>
+                          console.log("Autoplay error:", err)
+                        );
+                    }
+                  }}
+                  autoPlay
+                  playsInline
+                />
+              </div>
+            ) : (
+              /* ── 2+ Remote Participants: Dynamic Grid ── */
+              <div
+                className={styles.conferenceView}
+                style={{
+                  gridTemplateColumns:
+                    videos.length <= 4
+                      ? "repeat(2, 1fr)"
+                      : videos.length <= 9
+                      ? "repeat(3, 1fr)"
+                      : "repeat(4, 1fr)",
+                }}
+              >
+                {videos.map((video) => (
+                  <div key={video.socketId}>
+                    <video
+                      data-socket={video.socketId}
+                      ref={(ref) => {
+                        if (ref && video.stream) {
+                          ref.srcObject = video.stream;
+                          ref
+                            .play()
+                            .catch((err) =>
+                              console.log("Autoplay error:", err)
+                            );
+                        }
+                      }}
+                      autoPlay
+                      playsInline
+                    ></video>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {showModal && (
             <div className={styles.chatRoom}>
               <div className={styles.chatContainer}>
-                <h1>Chat</h1>
+                {/* Chat Header with close button */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <h1 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 600 }}>Chat</h1>
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", fontSize: "1.3rem", lineHeight: 1, padding: "2px 6px" }}
+                    title="Close chat"
+                  >
+                    ×
+                  </button>
+                </div>
 
+                {/* Messages scroll area */}
                 <div className={styles.chattingDisplay}>
                   {messages.length > 0 ? (
-                    messages.map((item, index) => {
-                      return (
-                        <div style={{ marginTop: "10px" }} key={index}>
-                          <p style={{ fontWeight: "bold", fontSize: "18px" }}>
-                            {item.sender}
-                          </p>
-                          <p style={{ fontSize: "15px" }}>{item.data}</p>
-                        </div>
-                      );
-                    })
+                    messages.map((item, index) => (
+                      <div style={{ marginTop: "10px" }} key={index}>
+                        <p style={{ fontWeight: "600", fontSize: "0.85rem", color: "#adb5bd", marginBottom: "2px" }}>
+                          {item.sender}
+                        </p>
+                        <p style={{ fontSize: "0.9rem", color: "white", margin: 0 }}>{item.data}</p>
+                      </div>
+                    ))
                   ) : (
-                    <p>no messages yet</p>
+                    <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginTop: "12px" }}>No messages yet</p>
                   )}
                 </div>
 
+                {/* Message Input */}
                 <div className={styles.chatingArea}>
-                  <TextField
-                    label="Message"
-                    variant="standard"
+                  <input
+                    type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    sx={{
-                      width: "100%",
-                      // 1. Text color you type
-                      "& .MuiInputBase-input": {
-                        color: "white",
-                      },
-                      // 2. Placeholder / Label color (normal)
-                      "& .MuiInputLabel-root": {
-                        color: "#9aa0a6",
-                      },
-                      // 3. Label color when clicked (focused)
-                      "& .MuiInputLabel-root.Mui-focused": {
-                        color: "#8ab4f8",
-                      },
-                      // 4. Normal bottom underline
-                      "& .MuiInput-underline:before": {
-                        borderBottomColor: "rgba(255, 255, 255, 0.3)",
-                      },
-                      // 5. Hover bottom underline
-                      "& .MuiInput-underline:hover:before": {
-                        borderBottomColor: "white !important",
-                      },
-                      // 6. Active focused bottom underline
-                      "& .MuiInput-underline:after": {
-                        borderBottomColor: "#8ab4f8",
-                      },
+                    onKeyDown={(e) => { if (e.key === "Enter") { sendMessage(); } }}
+                    placeholder="Type a message..."
+                    style={{
+                      flex: 1,
+                      background: "rgba(255,255,255,0.07)",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      borderRadius: "4px",
+                      color: "white",
+                      padding: "8px 10px",
+                      fontSize: "0.9rem",
+                      outline: "none",
                     }}
                   />
-                  <Button variant="outlined" onClick={sendMessage}>
+                  <button
+                    type="button"
+                    onClick={sendMessage}
+                    style={{
+                      background: "#ff7b00",
+                      border: "none",
+                      borderRadius: "4px",
+                      color: "white",
+                      padding: "8px 14px",
+                      cursor: "pointer",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     Send
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>
