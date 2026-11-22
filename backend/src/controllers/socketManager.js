@@ -84,7 +84,6 @@ export const connectToSocket = (server) => {
 
         // Send the new message to every participant
         connections[matchingRoom].forEach((elem) => {
-          io.to(elem).emit("chat-message", data, sender, socket.id);
           io.to(elem).emit("chat-Message", data, sender, socket.id);
         });
       }

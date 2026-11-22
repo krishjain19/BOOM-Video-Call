@@ -302,22 +302,25 @@ export default function VideoMeetComponent() {
       secure: server_url.startsWith("https"),
     });
 
+    socketRef.current.off("signal");
     socketRef.current.on("signal", gotMessageFromServer);
 
+    socketRef.current.off("connect");
     socketRef.current.on("connect", () => {
       const room = (url ? `/${url}` : window.location.pathname).replace(
         /\/+$/,
         "",
       );
       socketRef.current.emit("join-call", room);
-
       socketIdref.current = socketRef.current.id;
+    });
 
-      socketRef.current.on("chat-Message", addMessage);
+    socketRef.current.off("chat-Message");
+    socketRef.current.on("chat-Message", addMessage);
 
-      socketRef.current.on("userLeft", (id) => {
-        setVideos((videos) => videos.filter((video) => video.socketId !== id));
-      });
+    socketRef.current.off("userLeft");
+    socketRef.current.on("userLeft", (id) => {
+      setVideos((videos) => videos.filter((video) => video.socketId !== id));
     });
 
     socketRef.current.on("user-joined", (id, clients) => {
