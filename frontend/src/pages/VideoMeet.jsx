@@ -47,6 +47,17 @@ const peerConfigConnections = {
 export default function VideoMeetComponent() {
   const { url } = useParams();
 
+  const sessionKey = url ? `meet_session_${url}` : "meet_session_room";
+
+  const savedSession = (() => {
+    try {
+      const data = sessionStorage.getItem(sessionKey);
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      return null;
+    }
+  })();
+
   var socketRef = useRef();
   let socketIdref = useRef();
 
@@ -72,9 +83,11 @@ export default function VideoMeetComponent() {
 
   let [newMessages, setNewMessages] = useState(3);
 
-  let [askForUsername, setAskForUsername] = useState(true);
+  let [askForUsername, setAskForUsername] = useState(
+    savedSession?.inCall ? false : true
+  );
 
-  let [username, setUsername] = useState("");
+  let [username, setUsername] = useState(savedSession?.username || "");
 
   const videoRef = useRef([]);
 
@@ -135,6 +148,20 @@ export default function VideoMeetComponent() {
   useEffect(() => {
     getPermission();
   }, []);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (!askForUsername) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [askForUsername]);
 
   let getUserMediaSuccess = (stream) => {
     try {
@@ -415,10 +442,24 @@ export default function VideoMeetComponent() {
     connectToSocketServer();
   };
 
+  useEffect(() => {
+    if (savedSession?.inCall && savedSession?.username) {
+      getMedia();
+    }
+  }, []);
+
   let routeTo = useNavigate();
 
   let connect = () => {
     setAskForUsername(false);
+
+    try {
+      sessionStorage.setItem(
+        sessionKey,
+        JSON.stringify({ inCall: true, username: username.trim() })
+      );
+    } catch (e) {}
+
     getMedia();
   };
 
@@ -508,6 +549,10 @@ export default function VideoMeetComponent() {
   };
 
   let handleCallEnd = () => {
+    try {
+      sessionStorage.removeItem(sessionKey);
+    } catch (e) {}
+
     try {
       let tracks = localVideoRef.current.srcObject.getTracks();
       tracks.forEach((track) => track.stop());
