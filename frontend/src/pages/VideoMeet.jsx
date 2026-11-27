@@ -89,6 +89,12 @@ export default function VideoMeetComponent() {
 
   let [username, setUsername] = useState(savedSession?.username || "");
 
+  const userNamesRef = useRef({});
+  const usernameRef = useRef(username);
+  useEffect(() => {
+    usernameRef.current = username;
+  }, [username]);
+
   const videoRef = useRef([]);
 
   let [videos, setVideos] = useState([]);
@@ -185,7 +191,10 @@ export default function VideoMeetComponent() {
             socketRef.current.emit(
               "signal",
               id,
-              JSON.stringify({ sdp: connections[id].localDescription }),
+              JSON.stringify({
+                sdp: connections[id].localDescription,
+                username: usernameRef.current || username,
+              }),
             );
           })
           .catch((e) => console.log(e));
@@ -278,6 +287,15 @@ export default function VideoMeetComponent() {
     var signal = JSON.parse(message);
 
     if (fromId !== socketIdref.current) {
+      if (signal.username) {
+        userNamesRef.current[fromId] = signal.username;
+        setVideos((prevVideos) =>
+          prevVideos.map((v) =>
+            v.socketId === fromId ? { ...v, username: signal.username } : v
+          )
+        );
+      }
+
       if (signal.sdp) {
         connections[fromId]
           .setRemoteDescription(new RTCSessionDescription(signal.sdp))
@@ -294,6 +312,7 @@ export default function VideoMeetComponent() {
                         fromId,
                         JSON.stringify({
                           sdp: connections[fromId].localDescription,
+                          username: usernameRef.current || username,
                         }),
                       );
                     })
@@ -338,7 +357,7 @@ export default function VideoMeetComponent() {
         /\/+$/,
         "",
       );
-      socketRef.current.emit("join-call", room);
+      socketRef.current.emit("join-call", room, usernameRef.current || username);
       socketIdref.current = socketRef.current.id;
     });
 
@@ -350,9 +369,23 @@ export default function VideoMeetComponent() {
       setVideos((videos) => videos.filter((video) => video.socketId !== id));
     });
 
-    socketRef.current.on("user-joined", (id, clients) => {
+    socketRef.current.on("user-joined", (id, clients, serverUserNames) => {
+      if (serverUserNames && typeof serverUserNames === "object") {
+        userNamesRef.current = { ...userNamesRef.current, ...serverUserNames };
+      }
+
       clients.forEach((socketListId) => {
         if (socketListId === socketIdref.current) return;
+
+        // Broadcast our username to newly joined peers immediately
+        socketRef.current.emit(
+          "signal",
+          socketListId,
+          JSON.stringify({
+            type: "user-name",
+            username: usernameRef.current || username,
+          }),
+        );
 
         connections[socketListId] = new RTCPeerConnection(
           peerConfigConnections,
@@ -377,7 +410,11 @@ export default function VideoMeetComponent() {
             setVideos((prevVideos) => {
               const updateVideos = prevVideos.map((v) =>
                 v.socketId === socketListId
-                  ? { ...v, stream: event.stream }
+                  ? {
+                      ...v,
+                      stream: event.stream,
+                      username: userNamesRef.current[socketListId] || v.username || "",
+                    }
                   : v,
               );
               videoRef.current = updateVideos;
@@ -389,6 +426,7 @@ export default function VideoMeetComponent() {
               stream: event.stream,
               autoPlay: true,
               playsInline: true,
+              username: userNamesRef.current[socketListId] || "",
             };
 
             setVideos((videos) => {
@@ -426,7 +464,10 @@ export default function VideoMeetComponent() {
                 socketRef.current.emit(
                   "signal",
                   id2,
-                  JSON.stringify({ sdp: connections[id2].localDescription }),
+                  JSON.stringify({
+                    sdp: connections[id2].localDescription,
+                    username: usernameRef.current || username,
+                  }),
                 );
               })
               .catch((e) => console.log(e));
@@ -490,7 +531,10 @@ export default function VideoMeetComponent() {
             socketRef.current.emit(
               "signal",
               id,
-              JSON.stringify({ sdp: connections[id].localDescription }),
+              JSON.stringify({
+                sdp: connections[id].localDescription,
+                username: usernameRef.current || username,
+              }),
             );
           })
           .catch((e) => console.log(e));
@@ -620,7 +664,9 @@ export default function VideoMeetComponent() {
                 muted
                 style={{ transform: screen ? "none" : "scaleX(-1)" }}
               />
-              <span className={styles.pipLabel}>You</span>
+              <span className={styles.pipLabel}>
+                {username ? `${username} (You)` : "You"}
+              </span>
             </div>
 
             {/* ── Alone: dark waiting screen ── */}
@@ -648,6 +694,9 @@ export default function VideoMeetComponent() {
                   autoPlay
                   playsInline
                 />
+                <span className={styles.nameBadge}>
+                  {videos[0].username || "Participant"}
+                </span>
               </div>
             ) : (
               /* ── 2+ Remote Participants: Dynamic Grid ── */
@@ -679,6 +728,9 @@ export default function VideoMeetComponent() {
                       autoPlay
                       playsInline
                     ></video>
+                    <span className={styles.nameBadge}>
+                      {video.username || "Participant"}
+                    </span>
                   </div>
                 ))}
               </div>

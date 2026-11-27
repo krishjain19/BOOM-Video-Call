@@ -104,6 +104,28 @@
   transform: scaleX(-1);
 }
 
+/* ─── Participant On-Screen Name Badge ───────────────────── */
+.nameBadge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(18, 19, 22, 0.75);
+  backdrop-filter: blur(8px);
+  color: #f1f3f4;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* ─── Self Preview PiP ───────────────────────────────────── */
 .pipWrapper {
   position: absolute;

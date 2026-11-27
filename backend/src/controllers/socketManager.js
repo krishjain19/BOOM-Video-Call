@@ -3,6 +3,7 @@ import { Server } from "socket.io";
 let connections = {};
 let messages = {};
 let timeOnline = {};
+let userNames = {};
 
 export const connectToSocket = (server) => {
   const io = new Server(server, {
@@ -19,7 +20,7 @@ export const connectToSocket = (server) => {
 
     console.log("SOMETHING IS CONNECTED");
 
-    socket.on("join-call", (path) => {
+    socket.on("join-call", (path, userName) => {
       if (connections[path] === undefined) {
         connections[path] = [];
       }
@@ -30,12 +31,15 @@ export const connectToSocket = (server) => {
       }
 
       connections[path].push(socket.id);
+      if (userName) {
+        userNames[socket.id] = userName;
+      }
 
       timeOnline[socket.id] = Date.now();
 
       // Notify every participant, including the joining user.
       for (const id of connections[path]) {
-        io.to(id).emit("user-joined", socket.id, connections[path]);
+        io.to(id).emit("user-joined", socket.id, connections[path], userNames);
       }
 
       // Replay previous messages to this socket only.
@@ -91,6 +95,7 @@ export const connectToSocket = (server) => {
 
     // Remove the socket from its call on disconnection.
     socket.on("disconnect", () => {
+      delete userNames[socket.id];
       var diffTime = Math.abs(timeOnline[socket.id] - new Date());
       // const durationSeconds = timeOnline[socket.id]
       // ? Math.floor((Date.now() - timeOnline[socket.id].getTime()) / 1000)
